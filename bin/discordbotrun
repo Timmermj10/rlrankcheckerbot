@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# insta485run
+#
+# Set environment variables and run the flask utility
+#
+# Jacob Timmerman <timmermj@umich.edu>
+# Stop on errors, print commands
+set -Eeuo pipefail
+set -x
+
+# Call insta485db create if the database file dne
+FILE=var/insta485.sqlite3
+if test -e "$FILE"; then 
+    echo "$FILE exists."
+else 
+    ./bin/discordbotdb create
+fi
+
+# Set FLASK_ENV and FLASK_APP env variables
+export FLASK_ENV=development
+export FLASK_APP=insta485
+
+# Run the development server on port 8000
+flask run --host 0.0.0.0 --port 8000

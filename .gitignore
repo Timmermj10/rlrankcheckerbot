@@ -1,0 +1,6 @@
+# Git Ignore file used to prevent certain files with private information from being posted to Github
+
+tokens.py
+var/
+env/
+__pycache__/
