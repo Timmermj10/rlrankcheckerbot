@@ -3,6 +3,7 @@ import tokens
 import requests
 import json
 import time
+from flask import Flask
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -17,10 +18,33 @@ def handle_response(message) -> str:
     p_message_split = p_message.split()
 
     if p_message_split[0] == 'help':
-        return "register: how to register your account with the bot\nsteam: used to register steam account\nepic: used to register epic account"
+        return "register: how to register your account with the bot\nuse !register followed by your name (Timi), your steamid (76561198157520925) or epicid (VerbalShrimp46), and the platform you are using (steam/epic)\n You can also do a one-time lookup with the !steam and !epic commands followed by the steamid or epicid"
 
     if p_message_split[0] == 'register':
-        return "Please register using the commands 'steam' or 'epic'"
+        if len(p_message_split) != 4:
+            return "Please register using the format !register Timi 76561198157520925 steam"
+        else:
+            username = p_message_split[1]
+            id = p_message_split[2]
+            platform = p_message_split[3]
+
+            app = Flask(__name__)
+            with app.app_context():
+                # Connect to Database
+                connection = model.get_db()
+
+                # First check to make sure that the user is not already registered
+                # If already registered do nothing and return saying that if they would like to update registration go to !update
+
+                # Insert the register player into database
+                connection.execute(
+                    "INSERT INTO users(username, id, platform) "
+                    "VALUES ( ? , ? , ? ) ",
+                    (username, id, platform)
+                )
+
+                model.close_db(1)
+            return f"Successfully registered {username}\n{platform}id is {id}"
     
     if p_message_split[0] == 'steam':
         if len(p_message_split) != 2:
@@ -34,9 +58,6 @@ def handle_response(message) -> str:
             return f'{ranks[0]}\n{ranks[1]}'
         else:
             return f'**--{ranks[9]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tPeak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\nRanked 2v2:\n\tCurrent MMR: {ranks[3]}\n\tPeak MMR: {ranks[4]}\n\tGames Played: {ranks[5]}\nRanked 3v3:\n\tCurrent MMR: {ranks[6]}\n\tPeak MMR: {ranks[7]}\n\tGames Played: {ranks[8]}'
-
-        # Connect to Database
-        # connection = model.get_db()
 
     if p_message_split[0] == 'epic':
         if len(p_message_split) != 2:

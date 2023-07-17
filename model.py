@@ -20,7 +20,7 @@ def get_db():
     https://flask.palletsprojects.com/en/1.0.x/appcontext/#storing-data
     """
     if 'sqlite_db' not in flask.g:
-        db_filename = pathlib.Path(__file__).resolve().parent/'var'/'insta485.sqlite3'
+        db_filename = pathlib.Path(__file__).resolve().parent/'var'/'discordbot.sqlite3'
         flask.g.sqlite_db = sqlite3.connect(str(db_filename))
         flask.g.sqlite_db.row_factory = dict_factory
 
