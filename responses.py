@@ -15,7 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 def handle_response(message) -> str:
     p_message = message.lower()
 
-    p_message_split = p_message.split()
+    p_message_split = p_message.split('/')
 
     command = p_message_split[0]
 
@@ -53,12 +53,12 @@ def handle_response(message) -> str:
 
     # Used to update a players registration
     if command == 'update':
-        if len(p_message_split) != 4:
-            return "Please update registration using the format: **!update Timi 76561198157520925 steam**"
+        if len(p_message_split) != 5:
+            return "Please update registration using the format: **!update Timi *new_name* 76561198157520925 steam**"
 
         else:
             username = p_message_split[1]
-            new_user = p_message_split[2]
+            new_username = p_message_split[2]
             id = p_message_split[3]
             platform = p_message_split[4]
 
@@ -67,12 +67,12 @@ def handle_response(message) -> str:
                 # Connect to Database
                 connection = model.get_db()
 
-                # Insert the register player into database
+                # Update the registration to match the new registration
                 connection.execute(
                     "UPDATE users "
-                    "SET id = ?, platform = ? "
+                    "SET username = ?, id = ?, platform = ? "
                     "WHERE username = ? ",
-                    (id, platform, username)
+                    (new_username, id, platform, username)
                 )
 
                 model.close_db(1)
@@ -105,6 +105,7 @@ def handle_response(message) -> str:
                     return "This user is not registered with the bot\nPlease check your spelling, or use the !players command to find everyone already registered with the bot"
 
                 id = user['id']
+                id.replace(' ', '%20')
                 platform = user['platform']
 
                 model.close_db(1)
@@ -201,6 +202,8 @@ def handle_response(message) -> str:
     # If they haven't played a playlist, the ranks will not show up, have to write logic with alternative methods of displaying ranks
 
 # This logic doesn't work if they have not played certain gamemodes. Will need to update the logic to work with what gamemodes are shown and available
+
+# Search for for 1v1 2v2 3v3 gamemodes seperately using the .index(string) function and index into the ranks array with the index provided. If there is no match, return as all zeros
 def get_ranks(username, platform):
     options = Options()
     options.add_argument('--headless=new')
