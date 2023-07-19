@@ -1,8 +1,4 @@
 import model
-import tokens
-import requests
-import json
-import time
 from flask import Flask
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -195,20 +191,16 @@ def handle_response(message) -> str:
         else:
             return f'**--{ranks[9]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tPeak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\nRanked 2v2:\n\tCurrent MMR: {ranks[3]}\n\tPeak MMR: {ranks[4]}\n\tGames Played: {ranks[5]}\nRanked 3v3:\n\tCurrent MMR: {ranks[6]}\n\tPeak MMR: {ranks[7]}\n\tGames Played: {ranks[8]}'
 
-    # RLCS Fan Vote, with mmr values for 2v2 and 3v3 games figure out a % chance of winning for both teams to win. Based on current and peak mmr, matches played, and current streak
+    # Delete command that can be used to delete people from the database (maybe make this function assessable to certain users)
+    if command == 'delete': 
+        return 'Work in progress'
 
-    # Spaces in epicid doesn't work
 
-    # If they haven't played a playlist, the ranks will not show up, have to write logic with alternative methods of displaying ranks
-
-# This logic doesn't work if they have not played certain gamemodes. Will need to update the logic to work with what gamemodes are shown and available
-
-# Search for for 1v1 2v2 3v3 gamemodes seperately using the .index(string) function and index into the ranks array with the index provided. If there is no match, return as all zeros
 def get_ranks(username, platform):
     options = Options()
     options.add_argument('--headless=new')
 
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5735.90").install()), options=options)
 
     if platform == 'steam':
         driver.get(f'https://rocketleague.tracker.network/rocket-league/profile/steam/{username}/overview')
@@ -232,7 +224,7 @@ def get_ranks(username, platform):
 
     # Get the playlists
     elements = driver.find_elements(By.CLASS_NAME, 'playlist')
-    playlist = elements[0].text
+    playlists = [element.text for element in elements]
 
     # Get the username
     element = driver.find_element(By.CLASS_NAME, 'trn-ign__username')
@@ -241,11 +233,63 @@ def get_ranks(username, platform):
     driver.close()
     driver.quit()
 
-    if playlist =='Ranked Duel 1v1':
-        mmr_values = mmr_values[9:18]
-    else:
-        mmr_values = mmr_values[12:21]
+    index = []
 
-    mmr_values.append(username)
+    try:
+        ones = playlists.index('Ranked Duel 1v1')
+        index.append(int(ones))
+    except:
+        index.append(-1)
+    try:
+        twos = playlists.index('Ranked Doubles 2v2')
+        index.append(int(twos))
+    except:
+        index.append(-1)
+    try:
+        threes = playlists.index('Ranked Standard 3v3')
+        index.append(int(threes))
+    except:
+        index.append(-1)
 
-    return mmr_values
+    output = []
+    for pos in index:
+        if pos == -1:
+            output.extend(['N/A', 'N/A', 'N/A'])
+        else:
+            location = -((len(playlists) - 1 - pos) * 3)
+            if mmr_values[location - 2] == '':
+                mmr_values[location - 2] = mmr_values[location - 3]
+            if location == 0:
+                output.extend(mmr_values[location - 3:])
+            else:
+                output.extend(mmr_values[location - 3: location])
+
+    output.append(username)
+
+    return output
+
+
+'''
+**Fixed Bugs**
+
+    Spaces in epicid doesn't work
+        Fixed by using a / as the delimiter rather than spaces
+
+    If they haven't played a playlist, the ranks will not show up, have to write logic with alternative methods of displaying ranks
+        Fixed by writing logic to search the playlists array for the locations of the mmrs for each playlist
+    
+'''
+
+'''
+**Future updates**
+
+    * NEED to update the help and descriptions for each functions to include the updates to formatting
+
+    Change the if chain to a SWITCH statement for improved speeds
+
+    Layout of text (especially !players) to make it more readable
+
+    Allow players to search for specific gamemodes rather than just 1v1, 2v2, and 3v3
+
+    RLCS fan vote type system where player chooses players that would face off, and the system would return a % chance of who would win. Write the algorithm to use mmr, matches played, current win/loss streak, etc.
+'''
