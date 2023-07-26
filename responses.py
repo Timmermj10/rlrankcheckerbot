@@ -17,12 +17,12 @@ def handle_response(message) -> str:
 
     # Help message used to get people familiar with the bot
     if command == 'help':
-        return "**Register your account with the bot**\nUse !register followed by your **name** (Timi), your **steamid** (76561198157520925) or **epicid** (VerbalShrimp46), and the platform you are using (**steam**/**epic**) with commas between all sections\nUpdate your registration with **!update**\nRank check players already registered with **!rank** followed by the players **name**\nSee who is currently registered with the bot with **!players**, feel free to include a range of players by formatting your request with **!player 1 10** (the bot will default to 1-10)\nYou can also do a one-time lookup with the **!steam** and **!epic** commands followed by the **steamid** or **epicid**"
+        return "**Register your account with the bot**\nUse !register followed by your **name** (Timi), your **steamid** (76561198157520925) or **epicid** (VerbalShrimp46), and the platform you are using (**steam**/**epic**) with slashes '/' between all sections\nUpdate your registration with **!update**\nRank check players already registered with **!rank** followed by the players **name**\nSee who is currently registered with the bot with **!players**, feel free to include a range of players by formatting your request with **!players/1/10** (the bot will default to 1-10)\nYou can also do a one-time lookup with the **!steam** and **!epic** commands followed by the **steamid** or **epicid**\n**Remember to always include slashes between sections of the command!**"
 
     # Where the player will register to go into the database for easy lookup
     if command == 'register':
         if len(p_message_split) != 4:
-            return "Please register using the format: **!register Timi 76561198157520925 steam**"
+            return "Please register using the format: **!register/Timi/76561198157520925/steam**"
 
         else:
             username = p_message_split[1]
@@ -36,6 +36,18 @@ def handle_response(message) -> str:
 
                 # First check to make sure that the user is not already registered
                 # If already registered do nothing and return saying that if they would like to update registration go to !update
+                cur = connection.execute(
+                    "SELECT * "
+                    "FROM users "
+                    "WHERE username = ? OR id = ?  ",
+                    (username, id)
+                )
+
+                user = cur.fetchone()
+
+                if user: 
+                    model.close_db(1)
+                    return "There is already a user registered with this name or id\nUse update to update the registration or check !players to see everyone that is already registered!"
 
                 # Insert the register player into database
                 connection.execute(
@@ -50,7 +62,7 @@ def handle_response(message) -> str:
     # Used to update a players registration
     if command == 'update':
         if len(p_message_split) != 5:
-            return "Please update registration using the format: **!update Timi *new_name* 76561198157520925 steam**"
+            return "Please update registration using the format: **!update/Timi/*new_name*/76561198157520925/steam**"
 
         else:
             username = p_message_split[1]
@@ -77,7 +89,7 @@ def handle_response(message) -> str:
     # Used to search a player by name from the database
     if command == 'rank':
         if len(p_message_split) != 2:
-            return "Please use the rank command with the format: **!rank Timi**"
+            return "Please use the rank command with the format: **!rank/Timi**"
 
         else: 
             username = p_message_split[1]
@@ -126,7 +138,7 @@ def handle_response(message) -> str:
             x = 0
             y = 9
         else:
-            return "Please format the !players command as either **!players** or **!players x y**"
+            return "Please format the !players command as either **!players** or **!players/x/y**"
 
         app = Flask(__name__)
         with app.app_context():
@@ -159,14 +171,14 @@ def handle_response(message) -> str:
                 username = user['username']
                 id = user['id']
                 platform = user['platform']
-                output += f'{username} {id} {platform}\n'
+                output += f'{username} **+** {id} **+** {platform}\n'
 
             return output
 
     # Single search for players with steamid
     if command == 'steam':
         if len(p_message_split) != 2:
-            return 'Please format like below\n!steam "steam_id'
+            return 'Please format like below\n!steam/"steam_id'
 
         steam_id = p_message_split[1]
 
@@ -180,7 +192,7 @@ def handle_response(message) -> str:
     # Single search for players with epicid 
     if command == 'epic':
         if len(p_message_split) != 2:
-            return 'Please format like below\n!epic "epic_id'
+            return 'Please format like below\n!epic/"epic_id'
 
         epic_id = p_message_split[1]
 
@@ -192,9 +204,35 @@ def handle_response(message) -> str:
             return f'**--{ranks[9]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tPeak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\nRanked 2v2:\n\tCurrent MMR: {ranks[3]}\n\tPeak MMR: {ranks[4]}\n\tGames Played: {ranks[5]}\nRanked 3v3:\n\tCurrent MMR: {ranks[6]}\n\tPeak MMR: {ranks[7]}\n\tGames Played: {ranks[8]}'
 
     # Delete command that can be used to delete people from the database (maybe make this function assessable to certain users)
-    if command == 'delete': 
-        return 'Work in progress'
+    if command == 'delete':
+        if len(p_message_split) != 2:
+            return "Please delete registration using the format: **!delete/Timi**"
+        else:
+            username = p_message_split[1]
 
+            app = Flask(__name__)
+            with app.app_context():
+                # Connect to Database
+                connection = model.get_db()
+
+                # Delete the user from the database
+                connection.execute(
+                    "DELETE "
+                    "FROM users "
+                    "WHERE username = ? ",
+                    (username, )
+                )
+
+                model.close_db(1)
+
+                return f'Successfully deleted registration for {username}'
+
+    # History command that grabs the users mmrs over the past 7 days (if they have been registered with the bot over those 7 days)
+
+    # This command will work by looking up all users in the database once per day (midnight USEAST STD) and putting those values into an alternate table with the value of the day (1-7 *update the inverval on a weekly basis) Then when someone searches for a player we will grab the mmr values stored in the database and output them formatted according to the values returned from the database lookup.
+    if command == 'history':
+        # Create logic to search through the tables and output weeks mmr values for the selected player
+        return 'Work in progress'
 
 def get_ranks(username, platform):
     options = Options()
@@ -283,13 +321,14 @@ def get_ranks(username, platform):
 '''
 **Future updates**
 
-    * NEED to update the help and descriptions for each functions to include the updates to formatting
-
     Change the if chain to a SWITCH statement for improved speeds
 
     Layout of text (especially !players) to make it more readable
 
     Allow players to search for specific gamemodes rather than just 1v1, 2v2, and 3v3
 
+    Get a players progress over the week, outputs a players mmr over the week including a change in the mmr, maybe make a graph, who knows a lot can be done with this idea
+
     RLCS fan vote type system where player chooses players that would face off, and the system would return a % chance of who would win. Write the algorithm to use mmr, matches played, current win/loss streak, etc.
+
 '''
