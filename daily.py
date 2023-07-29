@@ -176,5 +176,5 @@ if __name__ == '__main__':
     # Run the rank updating script
     # grab_past_ranks()
 
-    scheduled_time = "22:48"
+    scheduled_time = "00:00"
     schedule_task(scheduled_time)

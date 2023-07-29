@@ -17,7 +17,7 @@ def handle_response(message) -> str:
 
     # Help message used to get people familiar with the bot
     if command == 'help':
-        return "**Register your account with the bot**\nUse !register followed by your **name** (Timi), your **steamid** (76561198157520925) or **epicid** (VerbalShrimp46), and the platform you are using (**steam**/**epic**) with slashes '/' between all sections\nUpdate your registration with **!update**\nRank check players already registered with **!rank** followed by the players **name**\nSee who is currently registered with the bot with **!players**, feel free to include a range of players by formatting your request with **!players/1/10** (the bot will default to 1-10)\nYou can also do a one-time lookup with the **!steam** and **!epic** commands followed by the **steamid** or **epicid**\n**Remember to always include slashes between sections of the command!**"
+        return "**Register your account with the bot**\nUse !register followed by your **name** (Timi), your **steamid64** (76561198157520925) or **epicid** (VerbalShrimp46), and the platform you are using (**steam**/**epic**) with slashes '/' between all sections\nUpdate your registration with **!update**\nRank check players already registered with **!rank** followed by the players **name**\nSee who is currently registered with the bot with **!players**, feel free to include a range of players by formatting your request with **!players/1/10** (the bot will default to 1-10)\nYou can also do a one-time lookup with the **!steam** and **!epic** commands followed by the **steamid** or **epicid**\n**Remember to always include slashes between sections of the command!**\nIf you need help finding your steamid64 you can use command **!id** followed by your steam url!"
 
     # Where the player will register to go into the database for easy lookup
     if command == 'register':
@@ -123,7 +123,7 @@ def handle_response(message) -> str:
                 if len(ranks) == 2:
                     return f'{ranks[0]}\n{ranks[1]}'
                 else:
-                    return f'**--{ranks[9]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tPeak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\nRanked 2v2:\n\tCurrent MMR: {ranks[3]}\n\tPeak MMR: {ranks[4]}\n\tGames Played: {ranks[5]}\nRanked 3v3:\n\tCurrent MMR: {ranks[6]}\n\tPeak MMR: {ranks[7]}\n\tGames Played: {ranks[8]}'
+                    return f'**--{ranks[9]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tSeason Peak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\nRanked 2v2:\n\tCurrent MMR: {ranks[3]}\n\tSeason Peak MMR: {ranks[4]}\n\tGames Played: {ranks[5]}\nRanked 3v3:\n\tCurrent MMR: {ranks[6]}\n\tSeason Peak MMR: {ranks[7]}\n\tGames Played: {ranks[8]}'
 
     # Used to output the players that are already registered with the bot
     if command == 'players':
@@ -234,6 +234,22 @@ def handle_response(message) -> str:
         # Create logic to search through the tables and output weeks mmr values for the selected player
         return 'Work in progress'
 
+    # Command that can be used to get the steamid64 if the user has a custom steamurl
+    if command == 'id':
+        if len(p_message_split) != 2:
+            return "Please use the format: **!id/*custom_url_portion***"
+
+        else:
+            custom = p_message_split[1]
+
+            # if custom[0:5] == 'http':
+            #     split_url = custom.split('/')
+            #     custom = split_url[4]
+
+            id = get_steamid64(custom)
+
+            return f'Your steamid64 is **{id}**'
+
 def get_ranks(username, platform):
     options = Options()
     options.add_argument('--headless=new')
@@ -268,6 +284,15 @@ def get_ranks(username, platform):
     element = driver.find_element(By.CLASS_NAME, 'trn-ign__username')
     username = element.text
 
+    # Get the column names
+    elements = driver.find_elements(By.CLASS_NAME, 'trn-table__column--left')
+    columns = [element.text for element in elements]
+
+    # To classify if the user has a peak rating available for display
+    peak_rat = 0
+    if 'Peak Rating' in columns:
+        peak_rat = 1
+
     driver.close()
     driver.quit()
 
@@ -294,36 +319,75 @@ def get_ranks(username, platform):
         if pos == -1:
             output.extend(['N/A', 'N/A', 'N/A'])
         else:
-            location = -((len(playlists) - 1 - pos) * 3)
-            if mmr_values[location - 2] == '':
+            if peak_rat:
+                location = -((len(playlists) - 1 - pos) * 3)
+            else:
+                location = -((len(playlists) - 1 - pos) * 2)
+            if mmr_values[location - 2] == '' and peak_rat:
                 mmr_values[location - 2] = mmr_values[location - 3]
             if location == 0:
-                output.extend(mmr_values[location - 3:])
+                if peak_rat:
+                    output.extend(mmr_values[location - 3:])
+                else:
+                    output.append(mmr_values[location - 2])
+                    output.append('N/A')
+                    output.append(mmr_values[location - 1])
             else:
-                output.extend(mmr_values[location - 3: location])
+                if peak_rat:
+                    output.extend(mmr_values[location - 3: location])
+                else:
+                    output.append(mmr_values[location - 2])
+                    output.append('N/A')
+                    output.append(mmr_values[location - 1])
+
 
     output.append(username)
 
     return output
 
+def get_steamid64(custom):
+    options = Options()
+    options.add_argument('--headless=new')
+
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5735.90").install()), options=options)
+
+    driver.get(f'https://steamid.io/lookup/{custom}')
+
+    wait = WebDriverWait(driver, 10)
+    try:
+        wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'key')))
+    except:
+        driver.close()
+        driver.quit()
+        return ['Steamid not found', 'Please make sure you are only entering the custom portion of the steamURL, not the whole URL']
+
+
+
+    elements = driver.find_elements(By.CLASS_NAME, 'value.short')
+    values = [element.text for element in elements]
+
+    steamid = values[2]
+
+    return steamid
+
+
 
 '''
-**Fixed Bugs**
+**Fixed Bugs and QOL Updates**
 
     Spaces in epicid doesn't work
         Fixed by using a / as the delimiter rather than spaces
 
     If they haven't played a playlist, the ranks will not show up, have to write logic with alternative methods of displaying ranks
         Fixed by writing logic to search the playlists array for the locations of the mmrs for each playlist
-    
+
+    Layout of text (especially !players) to make it more readable
 '''
 
 '''
 **Future updates**
 
     Change the if chain to a SWITCH statement for improved speeds
-
-    Layout of text (especially !players) to make it more readable
 
     Allow players to search for specific gamemodes rather than just 1v1, 2v2, and 3v3
 
