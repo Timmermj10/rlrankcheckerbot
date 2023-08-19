@@ -7,6 +7,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from seleniumbase import Driver
 
 def handle_response(message) -> str:
     p_message = message.lower()
@@ -123,7 +124,7 @@ def handle_response(message) -> str:
                 if len(ranks) == 2:
                     return f'{ranks[0]}\n{ranks[1]}'
                 else:
-                    return f'**--{ranks[9]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tSeason Peak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\nRanked 2v2:\n\tCurrent MMR: {ranks[3]}\n\tSeason Peak MMR: {ranks[4]}\n\tGames Played: {ranks[5]}\nRanked 3v3:\n\tCurrent MMR: {ranks[6]}\n\tSeason Peak MMR: {ranks[7]}\n\tGames Played: {ranks[8]}'
+                    return f'**--{ranks[12]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tSeason Peak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\n\tStreak: {ranks[3]}\nRanked 2v2:\n\tCurrent MMR: {ranks[4]}\n\tSeason Peak MMR: {ranks[5]}\n\tGames Played: {ranks[6]}\n\tStreak: {ranks[7]}\nRanked 3v3:\n\tCurrent MMR: {ranks[8]}\n\tSeason Peak MMR: {ranks[9]}\n\tGames Played: {ranks[10]}\n\tStreak: {ranks[11]}'
 
     # Used to output the players that are already registered with the bot
     if command == 'players':
@@ -187,7 +188,7 @@ def handle_response(message) -> str:
         if len(ranks) == 2:
             return f'{ranks[0]}\n{ranks[1]}'
         else:
-            return f'**--{ranks[9]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tPeak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\nRanked 2v2:\n\tCurrent MMR: {ranks[3]}\n\tPeak MMR: {ranks[4]}\n\tGames Played: {ranks[5]}\nRanked 3v3:\n\tCurrent MMR: {ranks[6]}\n\tPeak MMR: {ranks[7]}\n\tGames Played: {ranks[8]}'
+            return f'**--{ranks[12]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tSeason Peak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\n\tStreak: {ranks[3]}\nRanked 2v2:\n\tCurrent MMR: {ranks[4]}\n\tSeason Peak MMR: {ranks[5]}\n\tGames Played: {ranks[6]}\n\tStreak: {ranks[7]}\nRanked 3v3:\n\tCurrent MMR: {ranks[8]}\n\tSeason Peak MMR: {ranks[9]}\n\tGames Played: {ranks[10]}\n\tStreak: {ranks[11]}'
 
     # Single search for players with epicid 
     if command == 'epic':
@@ -201,7 +202,7 @@ def handle_response(message) -> str:
         if len(ranks) == 2:
             return f'{ranks[0]}\n{ranks[1]}'
         else:
-            return f'**--{ranks[9]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tPeak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\nRanked 2v2:\n\tCurrent MMR: {ranks[3]}\n\tPeak MMR: {ranks[4]}\n\tGames Played: {ranks[5]}\nRanked 3v3:\n\tCurrent MMR: {ranks[6]}\n\tPeak MMR: {ranks[7]}\n\tGames Played: {ranks[8]}'
+            return f'**--{ranks[12]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tSeason Peak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\n\tStreak: {ranks[3]}\nRanked 2v2:\n\tCurrent MMR: {ranks[4]}\n\tSeason Peak MMR: {ranks[5]}\n\tGames Played: {ranks[6]}\n\tStreak: {ranks[7]}\nRanked 3v3:\n\tCurrent MMR: {ranks[8]}\n\tSeason Peak MMR: {ranks[9]}\n\tGames Played: {ranks[10]}\n\tStreak: {ranks[11]}'
 
     # Delete command that can be used to delete people from the database (maybe make this function assessable to certain users)
     if command == 'delete':
@@ -254,7 +255,10 @@ def get_ranks(username, platform):
     options = Options()
     options.add_argument('--headless=new')
 
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5735.90").install()), options=options)
+    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5845.96").install()), options=options) # 116.0.5799.0 114.0.5735.90
+    # driver = webdriver.Chrome(service=ChromeService('/Users/jaketimmerman/Desktop/Personal/chromedriver-mac-x64/chromedriver.exe'), options=options)
+    # driver = webdriver.Chrome(options=options)
+    driver = Driver(uc=True, headless=True)
 
     if platform == 'steam':
         driver.get(f'https://rocketleague.tracker.network/rocket-league/profile/steam/{username}/overview')
@@ -279,6 +283,10 @@ def get_ranks(username, platform):
     # Get the playlists
     elements = driver.find_elements(By.CLASS_NAME, 'playlist')
     playlists = [element.text for element in elements]
+
+    # Get the streaks
+    elements = driver.find_elements(By.CLASS_NAME, 'matches')
+    streaks = [element.text for element in elements]
 
     # Get the username
     element = driver.find_element(By.CLASS_NAME, 'trn-ign__username')
@@ -339,6 +347,18 @@ def get_ranks(username, platform):
                     output.append(mmr_values[location - 2])
                     output.append('N/A')
                     output.append(mmr_values[location - 1])
+
+        # Streak Work
+        streak = streaks[pos]
+        streak = streak[streak.index('\n')+1:]
+        if 'Loss' in streak:
+            streak = streak[streak.index('.')+2:]
+            streak += ' :crying_cat_face:'
+            output.append(streak)
+        if 'Win' in streak:
+            streak = streak[streak.index('.')+2:]
+            streak += ' <:happycat:1017291567519780894>'
+            output.append(streak)
 
 
     output.append(username)

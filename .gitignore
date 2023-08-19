@@ -4,3 +4,4 @@ tokens.py
 var/
 env/
 __pycache__/
+downloaded_files
