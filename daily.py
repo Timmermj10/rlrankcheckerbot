@@ -43,7 +43,7 @@ def grab_past_ranks():
             connection = model.get_db()
 
             # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5735.90").install()), options=options)
-            driver = Driver(uc=True, headless=True)
+            driver = Driver(headless=False)
 
             username = user['username']
             id = user['id']
@@ -57,7 +57,7 @@ def grab_past_ranks():
                 driver.get(f'https://rocketleague.tracker.network/rocket-league/profile/epic/{id}/overview')
             else:
                 print('Driver Error')
-                return ['Error']
+                return 1
 
             wait = WebDriverWait(driver, 15)
             try:
@@ -66,7 +66,7 @@ def grab_past_ranks():
                 driver.close()
                 driver.quit()
                 print('Player not found')
-                return ['Player Not Found', 'Please Make Sure the Data in the System is Correct Before Searching Again']
+                return 1
 
             # Sorted by 1v1 mmr, peak 1v1 mmr, 1v1 games played (followed by 2v2 and 3v3 same format)
             elements = driver.find_elements(By.CLASS_NAME, 'value')
@@ -194,7 +194,7 @@ def grab_past_ranks():
                 )
 
             model.close_db(1)
-    return
+    return 0
 
 def schedule_task(scheduled_time):
     while True:
@@ -221,6 +221,11 @@ def schedule_task(scheduled_time):
 
 if __name__ == '__main__':
     # Run the rank updating script
-    scheduled_time = "06:00"
+    scheduled_time = "14:29"
     schedule_task(scheduled_time)
-    grab_past_ranks()
+    stopped = grab_past_ranks()
+
+    # If the driver or the search fails, try again
+    # Can make this better by setting where we failed and start the process again from there
+    while stopped:
+        grab_past_ranks()
