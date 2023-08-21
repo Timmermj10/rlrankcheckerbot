@@ -38,32 +38,35 @@ def run_discord_bot():
         user_message = str(message.content)
         channel = str(message.channel)
 
-        # Prevents infinite loop of bot responding to itself, also prevents the bot from responding outside of general
-        if username == str(client.user) or channel != 'general': # CHANGE THIS LINE IF YOU WANT TO DUBUG IN PERSONAL SERVER ONLY channel == 'general'
+        # Prevents infinite loop of bot responding to itself, also prevents the bot from responding outside of bot-spam
+        if username == str(client.user) or channel != 'bot-spam': # CHANGE THIS LINE IF YOU WANT TO DUBUG IN PERSONAL SERVER ONLY channel == 'bot-spam'
             return 
 
         print(f'{username} said: "{user_message}" in {channel}')
 
-        # Prevents infinite loop of bot responding to itself, also prevents the bot from responding outside of general
-        if username == client.user or channel != 'general': # CHANGE THIS LINE IF YOU WANT TO DUBUG IN PERSONAL SERVER ONLY channel == 'general'
+        # Prevents infinite loop of bot responding to itself, also prevents the bot from responding outside of bot-spam
+        if username == client.user or channel != 'bot-spam': # CHANGE THIS LINE IF YOU WANT TO DUBUG IN PERSONAL SERVER ONLY channel == 'bot-spam'
             return 
 
         # The main check of if the user is trying to use the bot for something
-        if user_message[0] == '!' and not PAUSE and channel == 'general':
+        if user_message[0] == '!' and not PAUSE and channel == 'bot-spam':
             user_message = user_message[1:]
             await send_message(message, user_message, is_private=False)
             return
 
         # Special check incase the bot is currently updating daily mmrs, so the database doesn't do a double upload and mess up the data
-        if PAUSE and channel == 'general' and user_message[0] == '!':
+        if PAUSE and channel == 'bot-spam' and user_message[0] == '!':
             await message.channel.send('Currently updating daily MMR, please wait for 15 minutes')
             return
 
         # Special Don Request handling, if a user says hi to the bot, the bot will say hi back :)
-        if 'hi timibot' in user_message and channel == 'general': # username == 'africanooo#0'
+        if 'hi timibot' in user_message and channel == 'bot-spam': # username == 'africanooo#0'
             username = username[:username.index('#')]
             await message.channel.send(f'Hi Mr. {username.capitalize()} <:happycat:1017291567519780894>')
             return
+
+        # Add a special request handling for if they want to be told something
+        # Compile all old posts of friend where he puts random information
 
     @client.event
     async def startcooldown(duration: int):
