@@ -256,13 +256,13 @@ def handle_response(message) -> str:
             return f'Your steamid64 is **{id}**'
 
 def get_ranks(username, platform):
-    options = Options()
-    options.add_argument('--headless=new')
+    # options = Options()
+    # options.add_argument('--headless=new')
 
     # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5845.96").install()), options=options) # 116.0.5799.0 114.0.5735.90
     # driver = webdriver.Chrome(service=ChromeService('/Users/jaketimmerman/Desktop/Personal/chromedriver-mac-x64/chromedriver.exe'), options=options)
     # driver = webdriver.Chrome(options=options)
-    driver = Driver(headless=True) #uc=True, headless=False
+    driver = Driver(headless2=True) #uc=True, headless=False
 
     if platform == 'steam':
         driver.get(f'https://rocketleague.tracker.network/rocket-league/profile/steam/{username}/overview')
@@ -374,7 +374,7 @@ def get_steamid64(custom):
     options.add_argument('--headless=new')
 
     # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5735.90").install()), options=options)
-    driver = Driver(headless=False)
+    driver = Driver(headless2=True)
 
     driver.get(f'https://steamid.io/lookup/{custom}')
 

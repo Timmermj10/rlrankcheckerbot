@@ -43,7 +43,7 @@ def grab_past_ranks():
             connection = model.get_db()
 
             # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5735.90").install()), options=options)
-            driver = Driver(headless=False)
+            driver = Driver(headless2=True)
 
             username = user['username']
             id = user['id']
