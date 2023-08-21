@@ -13,6 +13,8 @@ from seleniumbase import Driver
 
 '''
 May need to save last accessed, wait a couple minutes, and continue
+
+Want to add it so when the task is done a message is sent over a socket to the other progam, so it knows that it can continue
 '''
 
 def grab_past_ranks():
@@ -217,30 +219,8 @@ def schedule_task(scheduled_time):
             # Check the time every minute (59 seconds to prevent missing the minute)
             time.sleep(59)
 
-# async def send_pause(message):
-#     try:
-#         response = 'PAUSE'
-#         await message.channel.send(response)
-#     except Exception as e:
-#         print(e)
-
-# async def send_continue(message):
-#     try:
-#         response = 'CONTINUE'
-#         await message.channel.send(response)
-#     except Exception as e:
-#         print(e)
-
 if __name__ == '__main__':
     # Run the rank updating script
-    # grab_past_ranks()
-
     scheduled_time = "06:00"
     schedule_task(scheduled_time)
     grab_past_ranks()
-
-'''
-Struggling with getting rate limited while running through all players
-Can try to increase time between requests, or can try and just pause for a minute when rate limited or just increase time between requests
-The basic operation is now working, can try and fix to when we get 400 error we pause and then continue where we left off 5 minutes later or something, just need to work around querying the rl tracker server repeatedly
-'''

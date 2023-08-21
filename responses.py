@@ -18,7 +18,7 @@ def handle_response(message) -> str:
 
     # Help message used to get people familiar with the bot
     if command == 'help':
-        return "**Register your account with the bot**\nUse !register followed by your **name** (Timi), your **steamid64** (76561198157520925) or **epicid** (VerbalShrimp46), and the platform you are using (**steam**/**epic**) with slashes '/' between all sections\nUpdate your registration with **!update**\nRank check players already registered with **!rank** followed by the players **name**\nSee who is currently registered with the bot with **!players**, feel free to include a range of players by formatting your request with **!players/1/10** (the bot will default to 1-10)\nYou can also do a one-time lookup with the **!steam** and **!epic** commands followed by the **steamid** or **epicid**\n**Remember to always include slashes between sections of the command!**\nIf you need help finding your steamid64 you can use command **!id** followed by your steam url!"
+        return "***Separate all portions of the command with '/'***\n\n**--Register your account with the bot--**\n\t***!register*** followed by your **name** (Timi), **steamid64** (76561198157520925) or **epicid** (VerbalShrimp46), and the platform (**steam**/**epic**)\n\n\t***!!! EXAMPLE OF REGISTRATION: !register/Timi/76561198157520925/steam !!!***\n\n**--Update your registration--**\n\t***!update*** followed by **current name** (Timi), **new name** (TimiBoy), **steamid64** (76561198157520925) or **epicid** (VerbalShrimp46), and platform (**steam**/**epic**)\n\n\t***!!! EXAMPLE OF UPDATING: !update/Timi/TimiBoy/76561198157520925/steam !!!***\n\n**--Rank check players already registered with the bot--**\n\t***!rank*** followed by the players **name** (Timi)\n\n\t***!!! EXAMPLE OF RANK CHECKING: !rank/Timi !!!***\n\n**--See who is currently registered with the bot--**\n\t**!players**, feel free to include a range of players by formatting your request with **!players/1/10** (the bot will default to 1-10)\n\n\t***!!! EXAMPLE OF CHECKING REGISTRATION: !players/11/20 !!!***\n\n**--One-time rank-check--**\n\t**!steam** and **!epic** commands followed by the **steamid** or **epicid**\n\n\t***!!! EXAMPLE OF ONE TIME RANK-CHECK: !epic/VerbalShrimp46 !!!***\n\n**--Find steamid64--**\n\tIf you need help finding your steamid64 you can use command **!id** followed by your custom portion of your steam url!\n\n\t***!!! EXAMPLE OF GETTING STEAMID64: !id/rltimi !!!***\n\n**Remember to always include slashes between sections of the command!**\n\n*--Comming soon: history command--*\n\t**Track how your friends are doing over the past week in their games!**"
 
     # Where the player will register to go into the database for easy lookup
     if command == 'register':
@@ -61,6 +61,7 @@ def handle_response(message) -> str:
             return f"Successfully registered {username}\n{platform}id is {id}"
 
     # Used to update a players registration
+    # CHECK IF WE CAN JUST HAVE THEM UPDATE NAME AND OR NAME AND PLATFORM
     if command == 'update':
         if len(p_message_split) != 5:
             return "Please update registration using the format: **!update/Timi/*new_name*/76561198157520925/steam**"
@@ -127,6 +128,9 @@ def handle_response(message) -> str:
                     return f'**--{ranks[12]}\'s Ranks--**\n\nRanked 1v1:\n\tCurrent MMR: {ranks[0]}\n\tSeason Peak MMR: {ranks[1]}\n\tGames Played: {ranks[2]}\n\tStreak: {ranks[3]}\nRanked 2v2:\n\tCurrent MMR: {ranks[4]}\n\tSeason Peak MMR: {ranks[5]}\n\tGames Played: {ranks[6]}\n\tStreak: {ranks[7]}\nRanked 3v3:\n\tCurrent MMR: {ranks[8]}\n\tSeason Peak MMR: {ranks[9]}\n\tGames Played: {ranks[10]}\n\tStreak: {ranks[11]}'
 
     # Used to output the players that are already registered with the bot
+
+    # Update this to only take one input (1-z) and display that page of 10 players
+
     if command == 'players':
         if len(p_message_split) == 3:
             x = int(p_message_split[1]) - 1
@@ -369,7 +373,8 @@ def get_steamid64(custom):
     options = Options()
     options.add_argument('--headless=new')
 
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5735.90").install()), options=options)
+    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5735.90").install()), options=options)
+    driver = Driver(uc=True, headless=False)
 
     driver.get(f'https://steamid.io/lookup/{custom}')
 
@@ -379,9 +384,7 @@ def get_steamid64(custom):
     except:
         driver.close()
         driver.quit()
-        return ['Steamid not found', 'Please make sure you are only entering the custom portion of the steamURL, not the whole URL']
-
-
+        return 'Steamid not found, Please make sure you are only entering the custom portion of the steamURL, not the whole URL'
 
     elements = driver.find_elements(By.CLASS_NAME, 'value.short')
     values = [element.text for element in elements]
