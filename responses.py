@@ -1,4 +1,5 @@
 import model
+import datetime
 from flask import Flask
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -237,7 +238,61 @@ def handle_response(message) -> str:
     # This command will work by looking up all users in the database once per day (midnight USEAST STD) and putting those values into an alternate table with the value of the day (1-7 *update the inverval on a weekly basis) Then when someone searches for a player we will grab the mmr values stored in the database and output them formatted according to the values returned from the database lookup.
     if command == 'history':
         # Create logic to search through the tables and output weeks mmr values for the selected player
-        return 'Work in progress'
+        username = p_message_split[1]
+        game = p_message_split[2]
+
+        mmrs = ['N/A']*7
+
+        app = Flask(__name__)
+        with app.app_context():
+            # Connect to Database
+            connection = model.get_db()
+
+            # Grab the id and platform of the username
+            if game == 'ones':
+                cur = connection.execute(
+                    "SELECT mmr, period "
+                    "FROM ones "
+                    "WHERE user = ? ",
+                    (username, )
+                )
+            elif game == 'twos':
+                cur = connection.execute(
+                    "SELECT mmr, period "
+                    "FROM twos "
+                    "WHERE user = ? ",
+                    (username, )
+                )
+            elif game == 'threes':
+                cur = connection.execute(
+                    "SELECT mmr, period "
+                    "FROM threes "
+                    "WHERE user = ? ",
+                    (username, )
+                )
+            else:
+                return 'Please choose one of the three main gamemodes: ones, twos, or threes'
+
+            week = cur.fetchall()
+
+            if not week:
+                return "This user doesn't have any data associated with them. Make sure that you used the correct username and that the player is registered!"
+
+            current_day = datetime.datetime.today().weekday()
+            day_week = {'0':'Monday', '1':'Tuesday', '2':'Wednesday', '3':'Thursday', '4':'Friday', '5':'Saturday', '6':'Sunday'}
+
+            for day in week:
+                time = day['period']
+                mmr = day['mmr']
+                mmrs[time] = mmr
+
+            model.close_db(1)
+
+        output = ''
+        for i in range(1, 8):
+            output += f'{day_week[str((current_day + i) % 7)]}: ' + f'{mmrs[(current_day + i) % 7]} -- '
+
+        return output
 
     # Command that can be used to get the steamid64 if the user has a custom steamurl
     if command == 'id':

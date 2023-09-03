@@ -141,7 +141,7 @@ def grab_past_ranks():
 
             user = cur.fetchone()
 
-            print('here')
+            # print('here')
             print(username, output, day)
 
             # If they are already in the database Update
@@ -221,7 +221,7 @@ def schedule_task(scheduled_time):
 
 if __name__ == '__main__':
     # Run the rank updating script
-    scheduled_time = "14:29"
+    scheduled_time = "06:00"
     schedule_task(scheduled_time)
     stopped = grab_past_ranks()
 
