@@ -18,3 +18,6 @@ Updates:
 
   August 21st:
     Hotfixx to increase the speed of rank queries. The UC option in the driver from SeleniumBase seems to be having some problems that lead to increased wait times for execution. I simply removed this option and the bot is running at speeds consistent with what we had before. (The UC option is an option that prevents websites from noticing bot activity). I also changed the daily script, if the script fails based on the driver or the search, the script will just run again until it finishes! ~45 minutes, AFter finishing this part I noticed that the rank queries worked only with headless mode turned off. I did some searching and found headless2 option. Enabling headless2 seems to work, I don't know why headless started failing all of a sudden. ~15 minutes
+
+  August 30th:
+    Added functionality for the !history command, this command is paired with the daily.py script to gather weekly changes in MMR by running through everyone that is registered with the bot and adding their daily MMR to the database. Only basic formatting so far, going to change the format and add graphics to the output of the bot. ~90 minutes
