@@ -8,7 +8,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from seleniumbase import Driver
 
 def handle_response(message) -> str:
     p_message = message.lower()
@@ -311,14 +310,14 @@ def handle_response(message) -> str:
             return f'Your steamid64 is **{id}**'
 
 def get_ranks(username, platform):
-    # options = Options()
-    # options.add_argument('--headless=new')
+    options = Options()
+    options.add_argument('--headless=new')
+    # Have to set user agent because the website no longer loads DOM elements when in headless mode!
+    options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36')
 
-    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5845.96").install()), options=options) # 116.0.5799.0 114.0.5735.90
-    # driver = webdriver.Chrome(service=ChromeService('/Users/jaketimmerman/Desktop/Personal/chromedriver-mac-x64/chromedriver.exe'), options=options)
-    # driver = webdriver.Chrome(options=options)
-    driver = Driver(headless2=True) #uc=True, headless=False
+    driver = webdriver.Chrome(options=options)
 
+    # Depending on the platform of the user, format the URL differently 
     if platform == 'steam':
         driver.get(f'https://rocketleague.tracker.network/rocket-league/profile/steam/{username}/overview')
     elif platform == 'epic':
@@ -326,7 +325,7 @@ def get_ranks(username, platform):
     else:
         return ['Error']
 
-
+    # Wait for the DOM elements to be loaded before grabbing the values
     wait = WebDriverWait(driver, 10)
     try:
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'value')))
@@ -419,17 +418,18 @@ def get_ranks(username, platform):
             streak += ' <:happycat:1017291567519780894>'
             output.append(streak)
 
-
     output.append(username)
 
     return output
 
+# Function that takes in custom piece of steamURL and returns the steamid64
 def get_steamid64(custom):
     options = Options()
     options.add_argument('--headless=new')
 
     # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(version="114.0.5735.90").install()), options=options)
-    driver = Driver(headless2=True)
+    # driver = Driver(headless2=True)
+    driver = webdriver.Chrome(options=options)
 
     driver.get(f'https://steamid.io/lookup/{custom}')
 
